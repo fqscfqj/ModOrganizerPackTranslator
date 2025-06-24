@@ -169,7 +169,3 @@ ModOrganizerPackTranslator/
 - 支持基本的 Mod 安装包翻译功能
 - 图形化用户界面
 - 拖拽操作支持
-
----
-
-**如有问题或建议，请在 GitHub 上提交 Issue。** 
