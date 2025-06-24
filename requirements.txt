@@ -1,0 +1,6 @@
+customtkinter
+openai
+py7zr
+rarfile
+tkinterdnd2
+pyinstaller
