@@ -22,14 +22,14 @@
 
 ### 方法一：使用预编译版本（推荐）
 
-1. 从 [Releases](https://github.com/your-username/ModOrganizerPackTranslator/releases) 页面下载最新版本的 `ModTranslator.exe`
+1. 从 [Releases](https://github.com/fqscfqj/ModOrganizerPackTranslator/releases) 页面下载最新版本的 `ModTranslator.exe`
 2. 直接运行可执行文件，无需安装 Python 环境
 
 ### 方法二：从源码运行
 
 1. **克隆仓库**
    ```bash
-   git clone https://github.com/your-username/ModOrganizerPackTranslator.git
+   git clone https://github.com/fqscfqj/ModOrganizerPackTranslator.git
    cd ModOrganizerPackTranslator
    ```
 
