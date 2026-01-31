@@ -228,11 +228,22 @@ class App(CTkinterDnD):
             for element in root.findall('.//moduleName') + root.findall('.//description'):
                 if element.text and element.text.strip():
                     texts_to_translate.append({'element': element, 'type': 'text', 'original': element.text})
-            
-            for plugin in root.findall('.//plugin[@name]'):
-                original_name = plugin.get('name')
+
+            # Translate specific name attributes that are user-facing
+            for element in root.findall('.//installStep[@name]'):
+                original_name = element.get('name')
                 if original_name and original_name.strip():
-                    texts_to_translate.append({'element': plugin, 'type': 'attrib', 'original': original_name})
+                    texts_to_translate.append({'element': element, 'type': 'attrib', 'original': original_name})
+
+            for element in root.findall('.//group[@name]'):
+                original_name = element.get('name')
+                if original_name and original_name.strip():
+                    texts_to_translate.append({'element': element, 'type': 'attrib', 'original': original_name})
+
+            for element in root.findall('.//plugin[@name]'):
+                original_name = element.get('name')
+                if original_name and original_name.strip():
+                    texts_to_translate.append({'element': element, 'type': 'attrib', 'original': original_name})
             
             if not texts_to_translate:
                 self.log_message("✅ 警告: 未在 ModuleConfig.xml 中找到需要翻译的文本。")
