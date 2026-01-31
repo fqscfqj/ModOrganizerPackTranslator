@@ -43,11 +43,10 @@ echo.
 echo 正在清理之前的编译文件...
 if exist "dist" rmdir /s /q "dist" >nul 2>&1
 if exist "build" rmdir /s /q "build" >nul 2>&1
-if exist "*.spec" del /q "*.spec" >nul 2>&1
 
 echo.
 echo 正在编译程序...
-pyinstaller --onefile --windowed --name "ModTranslator" --clean --hidden-import=customtkinter --hidden-import=tkinterdnd2 --hidden-import=py7zr --hidden-import=rarfile --hidden-import=openai main.py
+pyinstaller --clean ModTranslator.spec
 
 if %ERRORLEVEL% EQU 0 (
     echo.

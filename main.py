@@ -9,6 +9,7 @@ import py7zr
 import rarfile
 import tempfile
 import json
+import sys
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from xml.etree import ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -19,12 +20,17 @@ class CTkinterDnD(ctk.CTk, TkinterDnD.Tk):
         super().__init__(*args, **kwargs)
         self.TkdndVersion = TkinterDnD._require(self)
 
+def resource_path(relative_path):
+    base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
+    return os.path.join(base_path, relative_path)
+
 class App(CTkinterDnD):
     def __init__(self):
         super().__init__()
 
         self.title("Mod安装包翻译工具")
         self.geometry("800x600")
+        self.set_window_icon()
         ctk.set_appearance_mode("System")
         ctk.set_default_color_theme("blue")
 
@@ -54,6 +60,14 @@ class App(CTkinterDnD):
         
         # 绑定窗口关闭事件
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def set_window_icon(self):
+        icon_path = resource_path(os.path.join("assets", "icons", "logo.ico"))
+        if os.path.exists(icon_path):
+            try:
+                self.iconbitmap(icon_path)
+            except Exception:
+                pass
 
     def setup_ui(self):
         self.grid_columnconfigure(0, weight=1)

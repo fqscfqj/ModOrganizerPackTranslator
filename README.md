@@ -144,6 +144,10 @@
 ModOrganizerPackTranslator/
 ├── main.py              # 主程序文件
 ├── requirements.txt     # Python 依赖
+├── assets/
+│   └── icons/
+│       ├── logo.ico      # 程序图标
+│       └── logo.png      # 程序图标（PNG）
 ├── build.bat           # 编译脚本
 └── README.md           # 说明文档
 ```
