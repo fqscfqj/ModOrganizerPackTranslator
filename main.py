@@ -35,6 +35,9 @@ I18N = {
         "decompressing": "  - 正在解压: {filename}",
         "error_unsupported_file_type": "❌ 错误: 不支持的文件类型。仅支持 .zip, .7z, .rar",
         "error_decompress_failed": "❌ 错误: 解压文件失败: {error}",
+        "error_rar_password": "❌ 错误: RAR 文件需要密码，暂不支持解密。",
+        "rar_entry_count": "  - RAR 文件包含 {count} 个条目。",
+        "rar_extract_progress": "    解压进度: {current}/{total} - {name}",
         "rar_hint": "  - RAR 错误提示: 您可能需要安装 UnRAR 库或将其添加到系统路径中。",
         "searching_moduleconfig": "  - 正在搜索 ModuleConfig.xml...",
         "extracted_structure": "  - 解压后的文件结构:",
@@ -77,6 +80,9 @@ I18N = {
         "decompressing": "  - Decompressing: {filename}",
         "error_unsupported_file_type": "❌ Error: Unsupported file type. Only .zip, .7z, .rar are supported.",
         "error_decompress_failed": "❌ Error: Failed to decompress: {error}",
+        "error_rar_password": "❌ Error: The RAR file is password-protected; decryption is not supported.",
+        "rar_entry_count": "  - RAR contains {count} entries.",
+        "rar_extract_progress": "    Extracting: {current}/{total} - {name}",
         "rar_hint": "  - RAR hint: You may need to install UnRAR or add it to PATH.",
         "searching_moduleconfig": "  - Searching for ModuleConfig.xml...",
         "extracted_structure": "  - Extracted file structure:",
@@ -428,7 +434,22 @@ class App(CTkinterDnD):
                         z.extractall(path=temp_dir)
                 elif filepath.endswith('.rar'):
                     with rarfile.RarFile(filepath) as rf:
-                        rf.extractall(temp_dir)
+                        if rf.needs_password():
+                            self.log_message(self.t("error_rar_password"))
+                            return
+                        try:
+                            rar_entries = rf.infolist()
+                            total_entries = len(rar_entries)
+                            self.log_message(self.t("rar_entry_count", count=total_entries))
+                            for idx, entry in enumerate(rar_entries, start=1):
+                                if entry.is_dir():
+                                    continue
+                                if idx == 1 or idx % 20 == 0 or idx == total_entries:
+                                    self.log_message(self.t("rar_extract_progress", current=idx, total=total_entries, name=entry.filename))
+                                rf.extract(entry, temp_dir)
+                        except Exception as e:
+                            self.log_message(self.t("error_decompress_failed", error=e))
+                            return
                 else:
                     self.log_message(self.t("error_unsupported_file_type"))
                     return
