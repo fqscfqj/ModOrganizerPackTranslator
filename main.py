@@ -437,19 +437,7 @@ class App(CTkinterDnD):
                         if rf.needs_password():
                             self.log_message(self.t("error_rar_password"))
                             return
-                        try:
-                            rar_entries = rf.infolist()
-                            total_entries = len(rar_entries)
-                            self.log_message(self.t("rar_entry_count", count=total_entries))
-                            for idx, entry in enumerate(rar_entries, start=1):
-                                if entry.is_dir():
-                                    continue
-                                if idx == 1 or idx % 20 == 0 or idx == total_entries:
-                                    self.log_message(self.t("rar_extract_progress", current=idx, total=total_entries, name=entry.filename))
-                                rf.extract(entry, temp_dir)
-                        except Exception as e:
-                            self.log_message(self.t("error_decompress_failed", error=e))
-                            return
+                        rf.extractall(temp_dir)
                 else:
                     self.log_message(self.t("error_unsupported_file_type"))
                     return
