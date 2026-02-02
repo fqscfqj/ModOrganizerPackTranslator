@@ -38,6 +38,8 @@ I18N = {
         "error_decompress_failed": "❌ 错误: 解压文件失败: {error}",
         "sevenzip_fallback": "  - py7zr 不支持该压缩算法，尝试使用 7-Zip...",
         "sevenzip_not_found": "❌ 错误: 未找到 7-Zip (7z/7za/7zr)。请安装 7-Zip 并确保在 PATH 中。",
+        "using_extractor": "  - 使用解压工具: {tool}",
+        "rar_fallback": "  - rarfile 解压失败，尝试使用外部解压工具...",
         "error_rar_password": "❌ 错误: RAR 文件需要密码，暂不支持解密。",
         "rar_entry_count": "  - RAR 文件包含 {count} 个条目。",
         "rar_extract_progress": "    解压进度: {current}/{total} - {name}",
@@ -85,6 +87,8 @@ I18N = {
         "error_decompress_failed": "❌ Error: Failed to decompress: {error}",
         "sevenzip_fallback": "  - py7zr doesn't support this compression method; trying 7-Zip...",
         "sevenzip_not_found": "❌ Error: 7-Zip (7z/7za/7zr) not found. Please install 7-Zip and add it to PATH.",
+        "using_extractor": "  - Using extractor: {tool}",
+        "rar_fallback": "  - rarfile failed; trying external extractor...",
         "error_rar_password": "❌ Error: The RAR file is password-protected; decryption is not supported.",
         "rar_entry_count": "  - RAR contains {count} entries.",
         "rar_extract_progress": "    Extracting: {current}/{total} - {name}",
@@ -405,6 +409,37 @@ class App(CTkinterDnD):
                 return path
         return None
 
+    def find_rar_extractor(self):
+        unrar_path = shutil.which("unrar")
+        if unrar_path:
+            return {"type": "unrar", "path": unrar_path}
+        winrar_path = shutil.which("WinRAR") or shutil.which("WinRAR.exe")
+        if winrar_path:
+            return {"type": "winrar", "path": winrar_path}
+        sevenzip_path = self.find_7zip_executable()
+        if sevenzip_path:
+            return {"type": "7z", "path": sevenzip_path}
+        return None
+
+    def extract_rar_with_tool(self, filepath, temp_dir, tool_info):
+        tool_type = tool_info["type"]
+        tool_path = tool_info["path"]
+        if tool_type in ("unrar", "winrar"):
+            cmd = [tool_path, "x", "-y", filepath, temp_dir]
+        elif tool_type == "7z":
+            cmd = [tool_path, "x", "-y", f"-o{temp_dir}", filepath]
+        else:
+            raise RuntimeError("Unknown RAR extractor")
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        if result.returncode != 0:
+            error_msg = result.stderr.strip() or result.stdout.strip() or "RAR extraction failed"
+            raise RuntimeError(error_msg)
+
     def extract_7z_with_7zip(self, filepath, temp_dir):
         exe_path = self.find_7zip_executable()
         if not exe_path:
@@ -467,11 +502,24 @@ class App(CTkinterDnD):
                         else:
                             raise
                 elif filepath.endswith('.rar'):
-                    with rarfile.RarFile(filepath) as rf:
-                        if rf.needs_password():
-                            self.log_message(self.t("error_rar_password"))
-                            return
-                        rf.extractall(temp_dir)
+                    extractor = self.find_rar_extractor()
+                    if extractor and extractor["type"] == "unrar":
+                        rarfile.UNRAR_TOOL = extractor["path"]
+                    try:
+                        with rarfile.RarFile(filepath) as rf:
+                            if rf.needs_password():
+                                self.log_message(self.t("error_rar_password"))
+                                return
+                            if extractor:
+                                self.log_message(self.t("using_extractor", tool=extractor["type"]))
+                            rf.extractall(temp_dir)
+                    except Exception:
+                        if extractor:
+                            self.log_message(self.t("rar_fallback"))
+                            self.log_message(self.t("using_extractor", tool=extractor["type"]))
+                            self.extract_rar_with_tool(filepath, temp_dir, extractor)
+                        else:
+                            raise
                 else:
                     self.log_message(self.t("error_unsupported_file_type"))
                     return
