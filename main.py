@@ -125,7 +125,7 @@ SUPPORTED_UI_LANGUAGES = ["zh-CN", "en"]
 SUPPORTED_TARGET_LANGUAGES = list(LANGUAGE_DISPLAY_NAMES.keys())
 
 # --- Helper class to make Customtkinter compatible with TkinterDND2 ---
-class CTkinterDnD(ctk.CTk, TkinterDnD.Tk):
+class CTkinterDnD(ctk.CTk, TkinterDnD.Tk):  # type: ignore
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.TkdndVersion = TkinterDnD._require(self)
@@ -173,12 +173,12 @@ class App(CTkinterDnD):
         # 绑定窗口关闭事件
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-    def t(self, key, **kwargs):
+    def t(self, key: str, **kwargs) -> str:
         lang = self.config.get("ui_language", "zh-CN")
         text = I18N.get(lang, I18N.get("en", {})).get(key, I18N.get("en", {}).get(key, key))
-        if kwargs:
+        if kwargs and text:
             return text.format(**kwargs)
-        return text
+        return text or key
 
     def get_language_display_name(self, code):
         ui_lang = self.config.get("ui_language", "zh-CN")
@@ -340,12 +340,12 @@ class App(CTkinterDnD):
         self.refresh_ui_texts()
         
     def setup_dnd(self):
-        self.drop_target_label.drop_target_register(DND_FILES)
-        self.drop_target_label.dnd_bind('<<DropEnter>>', self.drop_enter)
-        self.drop_target_label.dnd_bind('<<DropLeave>>', self.drop_leave)
-        self.drop_target_label.dnd_bind('<<Drop>>', self.drop)
-        self.log_textbox.drop_target_register(DND_FILES)
-        self.log_textbox.dnd_bind('<<Drop>>', self.drop)
+        self.drop_target_label.drop_target_register(DND_FILES)  # type: ignore
+        self.drop_target_label.dnd_bind('<<DropEnter>>', self.drop_enter)  # type: ignore
+        self.drop_target_label.dnd_bind('<<DropLeave>>', self.drop_leave)  # type: ignore
+        self.drop_target_label.dnd_bind('<<Drop>>', self.drop)  # type: ignore
+        self.log_textbox.drop_target_register(DND_FILES)  # type: ignore
+        self.log_textbox.dnd_bind('<<Drop>>', self.drop)  # type: ignore
 
     def on_ui_language_change(self, selected_label):
         code = self.parse_language_code(selected_label)
@@ -397,6 +397,7 @@ class App(CTkinterDnD):
         if not self.processing_lock.acquire(blocking=False):
             return
 
+        temp_dir = None
         try:
             self.log_message("="*50)
             self.log_message(self.t("start_processing_file", filename=os.path.basename(filepath)))
@@ -556,7 +557,7 @@ class App(CTkinterDnD):
         except Exception as e:
             self.log_message(self.t("fatal_error", error=e))
         finally:
-            if 'temp_dir' in locals() and os.path.exists(temp_dir):
+            if temp_dir and os.path.exists(temp_dir):
                 try:
                     shutil.rmtree(temp_dir)
                     self.log_message(self.t("cleanup_temp"))
@@ -639,6 +640,8 @@ Style: concise and clear for players."""
         try:
             # 获取当前窗口大小
             current_geometry = self.geometry()
+            if not current_geometry:
+                current_geometry = "800x600+0+0"
             width, height = current_geometry.split('x')[0], current_geometry.split('x')[1].split('+')[0]
             
             current_config = {
