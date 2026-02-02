@@ -10,6 +10,7 @@ import rarfile
 import tempfile
 import json
 import sys
+import subprocess
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from xml.etree import ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -35,6 +36,8 @@ I18N = {
         "decompressing": "  - 正在解压: {filename}",
         "error_unsupported_file_type": "❌ 错误: 不支持的文件类型。仅支持 .zip, .7z, .rar",
         "error_decompress_failed": "❌ 错误: 解压文件失败: {error}",
+        "sevenzip_fallback": "  - py7zr 不支持该压缩算法，尝试使用 7-Zip...",
+        "sevenzip_not_found": "❌ 错误: 未找到 7-Zip (7z/7za/7zr)。请安装 7-Zip 并确保在 PATH 中。",
         "error_rar_password": "❌ 错误: RAR 文件需要密码，暂不支持解密。",
         "rar_entry_count": "  - RAR 文件包含 {count} 个条目。",
         "rar_extract_progress": "    解压进度: {current}/{total} - {name}",
@@ -80,6 +83,8 @@ I18N = {
         "decompressing": "  - Decompressing: {filename}",
         "error_unsupported_file_type": "❌ Error: Unsupported file type. Only .zip, .7z, .rar are supported.",
         "error_decompress_failed": "❌ Error: Failed to decompress: {error}",
+        "sevenzip_fallback": "  - py7zr doesn't support this compression method; trying 7-Zip...",
+        "sevenzip_not_found": "❌ Error: 7-Zip (7z/7za/7zr) not found. Please install 7-Zip and add it to PATH.",
         "error_rar_password": "❌ Error: The RAR file is password-protected; decryption is not supported.",
         "rar_entry_count": "  - RAR contains {count} entries.",
         "rar_extract_progress": "    Extracting: {current}/{total} - {name}",
@@ -393,6 +398,27 @@ class App(CTkinterDnD):
             self.drop_target_label.place_forget()
         self.log_queue.put(message)
 
+    def find_7zip_executable(self):
+        for candidate in ("7z", "7za", "7zr"):
+            path = shutil.which(candidate)
+            if path:
+                return path
+        return None
+
+    def extract_7z_with_7zip(self, filepath, temp_dir):
+        exe_path = self.find_7zip_executable()
+        if not exe_path:
+            raise FileNotFoundError(self.t("sevenzip_not_found"))
+        result = subprocess.run(
+            [exe_path, "x", "-y", f"-o{temp_dir}", filepath],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        if result.returncode != 0:
+            error_msg = result.stderr.strip() or result.stdout.strip() or "7-Zip failed"
+            raise RuntimeError(error_msg)
+
     def process_file_thread(self, filepath):
         if not self.processing_lock.acquire(blocking=False):
             return
@@ -431,8 +457,15 @@ class App(CTkinterDnD):
                     with zipfile.ZipFile(filepath, 'r') as zip_ref:
                         zip_ref.extractall(temp_dir)
                 elif filepath.endswith('.7z'):
-                    with py7zr.SevenZipFile(filepath, mode='r') as z:
-                        z.extractall(path=temp_dir)
+                    try:
+                        with py7zr.SevenZipFile(filepath, mode='r') as z:
+                            z.extractall(path=temp_dir)
+                    except Exception as e:
+                        if "BCJ2" in str(e) or "filter is not supported" in str(e):
+                            self.log_message(self.t("sevenzip_fallback"))
+                            self.extract_7z_with_7zip(filepath, temp_dir)
+                        else:
+                            raise
                 elif filepath.endswith('.rar'):
                     with rarfile.RarFile(filepath) as rf:
                         if rf.needs_password():
