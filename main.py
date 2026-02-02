@@ -204,6 +204,14 @@ class App(CTkinterDnD):
         self.target_language_label.configure(text=self.t("target_language"))
         self.save_btn.configure(text=self.t("save_config"))
         self.drop_target_label.configure(text=self.t("drop_here"))
+        # 更新placeholder文本
+        ui_lang = self.config.get("ui_language", "zh-CN")
+        if ui_lang == "zh-CN":
+            self.base_url_entry.configure(placeholder_text="例如: https://api.openai.com/v1")
+            self.model_name_entry.configure(placeholder_text="例如: gpt-4-turbo")
+        else:
+            self.base_url_entry.configure(placeholder_text="e.g., https://api.openai.com/v1")
+            self.model_name_entry.configure(placeholder_text="e.g., gpt-4-turbo")
         self.refresh_language_options()
 
     def set_window_icon(self):
@@ -217,72 +225,110 @@ class App(CTkinterDnD):
     def setup_ui(self):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
+        
+        # 主容器，包含配置和按钮
+        main_settings_frame = ctk.CTkFrame(self, fg_color="transparent")
+        main_settings_frame.grid(row=0, column=0, padx=15, pady=15, sticky="ew")
+        main_settings_frame.grid_columnconfigure(0, weight=1)
 
-        # --- OpenAI Settings Frame ---
-        settings_frame = ctk.CTkFrame(self)
-        settings_frame.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
-        settings_frame.grid_columnconfigure(1, weight=1)
+        # --- API 配置分组 ---
+        api_frame = ctk.CTkFrame(main_settings_frame)
+        api_frame.grid(row=0, column=0, padx=0, pady=(0, 10), sticky="ew")
+        api_frame.grid_columnconfigure(1, weight=1)
+        
+        # API配置标题
+        api_title = ctk.CTkLabel(api_frame, text="🔑 API Configuration", font=("Arial", 13, "bold"), anchor="w")
+        api_title.grid(row=0, column=0, columnspan=2, padx=15, pady=(12, 8), sticky="ew")
 
-        self.api_key_label = ctk.CTkLabel(settings_frame, text=self.t("openai_api_key"))
-        self.api_key_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-        self.api_key_entry = ctk.CTkEntry(settings_frame, show="*")
-        self.api_key_entry.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
+        self.api_key_label = ctk.CTkLabel(api_frame, text=self.t("openai_api_key"), width=120, anchor="w")
+        self.api_key_label.grid(row=1, column=0, padx=(15, 10), pady=8, sticky="w")
+        self.api_key_entry = ctk.CTkEntry(api_frame, show="*", height=32)
+        self.api_key_entry.grid(row=1, column=1, padx=(0, 15), pady=8, sticky="ew")
         self.api_key_entry.insert(0, self.config["api_key"])
 
-        self.base_url_label = ctk.CTkLabel(settings_frame, text=self.t("base_url"))
-        self.base_url_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
-        self.base_url_entry = ctk.CTkEntry(settings_frame, placeholder_text="例如: https://api.openai.com/v1")
-        self.base_url_entry.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
+        self.base_url_label = ctk.CTkLabel(api_frame, text=self.t("base_url"), width=120, anchor="w")
+        self.base_url_label.grid(row=2, column=0, padx=(15, 10), pady=8, sticky="w")
+        self.base_url_entry = ctk.CTkEntry(api_frame, placeholder_text="https://api.openai.com/v1", height=32)
+        self.base_url_entry.grid(row=2, column=1, padx=(0, 15), pady=8, sticky="ew")
         self.base_url_entry.insert(0, self.config["base_url"])
 
-        self.model_name_label = ctk.CTkLabel(settings_frame, text=self.t("model_name"))
-        self.model_name_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
-        self.model_name_entry = ctk.CTkEntry(settings_frame, placeholder_text="例如: gpt-4-turbo")
-        self.model_name_entry.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
+        self.model_name_label = ctk.CTkLabel(api_frame, text=self.t("model_name"), width=120, anchor="w")
+        self.model_name_label.grid(row=3, column=0, padx=(15, 10), pady=8, sticky="w")
+        self.model_name_entry = ctk.CTkEntry(api_frame, placeholder_text="gpt-4-turbo", height=32)
+        self.model_name_entry.grid(row=3, column=1, padx=(0, 15), pady=8, sticky="ew")
         self.model_name_entry.insert(0, self.config["model_name"])
 
-        self.concurrency_label = ctk.CTkLabel(settings_frame, text=self.t("concurrency"))
-        self.concurrency_label.grid(row=3, column=0, padx=10, pady=5, sticky="w")
-        self.concurrency_entry = ctk.CTkEntry(settings_frame)
-        self.concurrency_entry.grid(row=3, column=1, padx=10, pady=5, sticky="ew")
+        self.concurrency_label = ctk.CTkLabel(api_frame, text=self.t("concurrency"), width=120, anchor="w")
+        self.concurrency_label.grid(row=4, column=0, padx=(15, 10), pady=(8, 12), sticky="w")
+        self.concurrency_entry = ctk.CTkEntry(api_frame, width=100, height=32)
+        self.concurrency_entry.grid(row=4, column=1, padx=(0, 15), pady=(8, 12), sticky="w")
         self.concurrency_entry.insert(0, self.config["concurrency"])
 
-        self.ui_language_label = ctk.CTkLabel(settings_frame, text=self.t("ui_language"))
-        self.ui_language_label.grid(row=4, column=0, padx=10, pady=5, sticky="w")
+        # --- 语言配置分组 ---
+        lang_frame = ctk.CTkFrame(main_settings_frame)
+        lang_frame.grid(row=1, column=0, padx=0, pady=(0, 10), sticky="ew")
+        lang_frame.grid_columnconfigure(1, weight=1)
+        lang_frame.grid_columnconfigure(3, weight=1)
+        
+        # 语言配置标题
+        lang_title = ctk.CTkLabel(lang_frame, text="🌍 Language Settings", font=("Arial", 13, "bold"), anchor="w")
+        lang_title.grid(row=0, column=0, columnspan=4, padx=15, pady=(12, 8), sticky="ew")
+
+        self.ui_language_label = ctk.CTkLabel(lang_frame, text=self.t("ui_language"), width=120, anchor="w")
+        self.ui_language_label.grid(row=1, column=0, padx=(15, 10), pady=(8, 12), sticky="w")
         self.ui_language_var = ctk.StringVar(value=self.get_language_option_label(self.config.get("ui_language", "zh-CN")))
         self.ui_language_menu = ctk.CTkOptionMenu(
-            settings_frame,
+            lang_frame,
             values=[self.get_language_option_label(code) for code in SUPPORTED_UI_LANGUAGES],
             variable=self.ui_language_var,
-            command=self.on_ui_language_change
+            command=self.on_ui_language_change,
+            height=32,
+            width=200
         )
-        self.ui_language_menu.grid(row=4, column=1, padx=10, pady=5, sticky="ew")
+        self.ui_language_menu.grid(row=1, column=1, padx=(0, 20), pady=(8, 12), sticky="w")
 
-        self.target_language_label = ctk.CTkLabel(settings_frame, text=self.t("target_language"))
-        self.target_language_label.grid(row=5, column=0, padx=10, pady=5, sticky="w")
+        self.target_language_label = ctk.CTkLabel(lang_frame, text=self.t("target_language"), width=120, anchor="w")
+        self.target_language_label.grid(row=1, column=2, padx=(15, 10), pady=(8, 12), sticky="w")
         self.target_language_var = ctk.StringVar(value=self.get_language_option_label(self.config.get("target_language", "zh-CN")))
         self.target_language_menu = ctk.CTkOptionMenu(
-            settings_frame,
+            lang_frame,
             values=[self.get_language_option_label(code) for code in SUPPORTED_TARGET_LANGUAGES],
             variable=self.target_language_var,
-            command=self.on_target_language_change
+            command=self.on_target_language_change,
+            height=32,
+            width=200
         )
-        self.target_language_menu.grid(row=5, column=1, padx=10, pady=5, sticky="ew")
+        self.target_language_menu.grid(row=1, column=3, padx=(0, 15), pady=(8, 12), sticky="w")
 
-        # 保存配置按钮
-        self.save_btn = ctk.CTkButton(settings_frame, text=self.t("save_config"), command=self.save_current_config, width=100)
-        self.save_btn.grid(row=6, column=1, padx=10, pady=5, sticky="e")
+        # --- 操作按钮区域 ---
+        button_frame = ctk.CTkFrame(main_settings_frame, fg_color="transparent")
+        button_frame.grid(row=2, column=0, padx=0, pady=0, sticky="ew")
+        
+        self.save_btn = ctk.CTkButton(
+            button_frame, 
+            text=self.t("save_config"), 
+            command=self.save_current_config, 
+            width=120,
+            height=36,
+            font=("Arial", 13, "bold")
+        )
+        self.save_btn.pack(side="right", padx=0, pady=0)
 
         # --- Log and Drop Frame ---
         log_frame = ctk.CTkFrame(self)
-        log_frame.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="nsew")
+        log_frame.grid(row=1, column=0, padx=15, pady=(0, 15), sticky="nsew")
         log_frame.grid_rowconfigure(0, weight=1)
         log_frame.grid_columnconfigure(0, weight=1)
 
-        self.log_textbox = ctk.CTkTextbox(log_frame, state="disabled", corner_radius=0)
-        self.log_textbox.grid(row=0, column=0, sticky="nsew")
+        self.log_textbox = ctk.CTkTextbox(log_frame, state="disabled", corner_radius=8, font=("Consolas", 10))
+        self.log_textbox.grid(row=0, column=0, padx=2, pady=2, sticky="nsew")
 
-        self.drop_target_label = ctk.CTkLabel(self.log_textbox, text=self.t("drop_here"), font=("", 20))
+        self.drop_target_label = ctk.CTkLabel(
+            self.log_textbox, 
+            text=self.t("drop_here"), 
+            font=("Arial", 16),
+            text_color=("#808080", "#A0A0A0")
+        )
         self.drop_target_label.place(relx=0.5, rely=0.5, anchor="center")
 
         self.refresh_ui_texts()
