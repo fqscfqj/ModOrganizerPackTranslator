@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 I18N = {
     "zh-CN": {
-        "app_title": "Mod安装包翻译工具",
+        "app_title": "ModOrganizerPackTranslator",
         "openai_api_key": "OpenAI API Key:",
         "base_url": "Base URL:",
         "model_name": "模型名称:",
@@ -27,7 +27,7 @@ I18N = {
         "save_config": "保存配置",
         "drop_here": "请将 .zip, .7z, 或 .rar 文件拖到这里",
         "drop_release": "可以松开鼠标了！",
-        "header_title": "Mod 安装包翻译工具",
+        "header_title": "ModOrganizerPackTranslator",
         "header_subtitle": "填写 API 配置后，将压缩包拖入下方区域开始处理。",
         "api_section_title": "API 配置",
         "lang_section_title": "语言设置",
@@ -75,7 +75,7 @@ I18N = {
         "config_save_error": "❌ 保存配置时出错: {error}"
     },
     "en": {
-        "app_title": "Mod Installer Pack Translator",
+        "app_title": "ModOrganizerPackTranslator",
         "openai_api_key": "OpenAI API Key:",
         "base_url": "Base URL:",
         "model_name": "Model:",
@@ -85,7 +85,7 @@ I18N = {
         "save_config": "Save",
         "drop_here": "Drop .zip, .7z, or .rar files here",
         "drop_release": "Release to drop!",
-        "header_title": "Mod Installer Pack Translator",
+        "header_title": "ModOrganizerPackTranslator",
         "header_subtitle": "Configure the API settings, then drop an archive into the area below.",
         "api_section_title": "API Settings",
         "lang_section_title": "Language Settings",
@@ -165,7 +165,7 @@ class App(CTkinterDnD):
     def __init__(self):
         super().__init__()
 
-        self.title("Mod安装包翻译工具")
+        self.title("ModOrganizerPackTranslator")
         self.geometry("800x600")
         self.set_window_icon()
         ctk.set_appearance_mode("System")

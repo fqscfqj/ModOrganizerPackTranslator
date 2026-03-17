@@ -24,7 +24,7 @@
 
 ### 方法一：使用预编译版本（推荐）
 
-1. 从 [Releases](https://github.com/fqscfqj/ModOrganizerPackTranslator/releases) 页面下载最新版本的 `ModTranslator.exe`
+1. 从 [Releases](https://github.com/fqscfqj/ModOrganizerPackTranslator/releases) 页面下载最新版本的 `ModOrganizerPackTranslator.exe`
 2. 直接运行可执行文件，无需安装 Python 环境
 
 ### 方法二：从源码运行
@@ -52,7 +52,7 @@
    ```bash
    build.bat
    ```
-3. 编译完成后，可执行文件将位于 `dist/ModTranslator.exe`
+3. 编译完成后，可执行文件将位于 `dist/ModOrganizerPackTranslator.exe`
 
 ## 使用说明
 

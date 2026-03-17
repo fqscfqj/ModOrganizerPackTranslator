@@ -5,7 +5,7 @@ REM 设置环境变量确保UTF-8编码
 set PYTHONIOENCODING=utf-8
 
 echo ====================================
-echo    Mod翻译工具
+echo    ModOrganizerPackTranslator
 echo ====================================
 echo.
 
@@ -46,18 +46,18 @@ if exist "build" rmdir /s /q "build" >nul 2>&1
 
 echo.
 echo 正在编译程序...
-pyinstaller --clean ModTranslator.spec
+pyinstaller --clean ModOrganizerPackTranslator.spec
 
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo ✅ 编译成功！
-    echo 📁 可执行文件位置: dist\ModTranslator.exe
+    echo 📁 可执行文件位置: dist\ModOrganizerPackTranslator.exe
     
     REM 检查文件是否真的存在
-    if exist "dist\ModTranslator.exe" (
+    if exist "dist\ModOrganizerPackTranslator.exe" (
         echo ✅ 文件验证成功
         echo 📊 文件大小: 
-        dir "dist\ModTranslator.exe" | findstr "ModTranslator.exe"
+        dir "dist\ModOrganizerPackTranslator.exe" | findstr "ModOrganizerPackTranslator.exe"
     ) else (
         echo ❌ 警告: 编译报告成功但未找到可执行文件
     )
