@@ -54,6 +54,9 @@ I18N = {
         "calling_api": "  - 正在调用 OpenAI API 进行翻译 (并发数: {count})...",
         "translated_success": "    ({index}/{total}) 翻译成功: '{source}' -> '{translated}'",
         "translated_failed": "    ({index}/{total}) ❌ 翻译失败: '{source}', 错误: {error}",
+        "translation_summary": "  - 翻译统计: 成功 {success} / 失败 {failed} / 总计 {total}",
+        "all_translations_failed_abort": "❌ 所有翻译均失败，可能是 API Key/Base URL/模型配置错误，已取消打包。",
+        "no_output_created": "  - 未生成输出压缩包。",
         "translation_failed_fallback": "翻译失败: {text}",
         "updating_xml": "  - 正在用译文更新 XML 文件...",
         "repacking": "  - 正在重新打包为: {filename}",
@@ -103,6 +106,9 @@ I18N = {
         "calling_api": "  - Translating with OpenAI API (concurrency: {count})...",
         "translated_success": "    ({index}/{total}) Translated: '{source}' -> '{translated}'",
         "translated_failed": "    ({index}/{total}) ❌ Failed: '{source}', Error: {error}",
+        "translation_summary": "  - Translation summary: success {success} / failed {failed} / total {total}",
+        "all_translations_failed_abort": "❌ All translations failed. Possible API Key/Base URL/model misconfiguration; repacking cancelled.",
+        "no_output_created": "  - No output archive was generated.",
         "translation_failed_fallback": "Translation failed: {text}",
         "updating_xml": "  - Updating XML with translations...",
         "repacking": "  - Repacking to: {filename}",
@@ -589,6 +595,9 @@ class App(CTkinterDnD):
 
             # 4. Translate concurrently
             translations = {}
+            success_count = 0
+            failed_count = 0
+            total_count = len(texts_to_translate)
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 future_to_text = {executor.submit(self.translate_text, item['original'], client, model): item for item in texts_to_translate}
                 for i, future in enumerate(as_completed(future_to_text)):
@@ -596,15 +605,24 @@ class App(CTkinterDnD):
                     try:
                         translated_text = future.result()
                         translations[item['original']] = translated_text
+                        success_count += 1
                         self.log_message(self.t("translated_success", index=i+1, total=len(texts_to_translate), source=item['original'], translated=translated_text))
                     except Exception as e:
+                        failed_count += 1
                         self.log_message(self.t("translated_failed", index=i+1, total=len(texts_to_translate), source=item['original'], error=e))
-                        translations[item['original']] = self.t("translation_failed_fallback", text=item['original'])
+
+            self.log_message(self.t("translation_summary", success=success_count, failed=failed_count, total=total_count))
+            if success_count == 0 and failed_count == total_count:
+                self.log_message(self.t("all_translations_failed_abort"))
+                self.log_message(self.t("no_output_created"))
+                return
 
             # 5. Update XML with translations
             self.log_message(self.t("updating_xml"))
             for item in texts_to_translate:
-                translated = translations.get(item['original'], item['original'])
+                translated = translations.get(item['original'])
+                if translated is None:
+                    continue
                 if item['type'] == 'text':
                     item['element'].text = translated
                 elif item['type'] == 'attrib':
