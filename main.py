@@ -27,6 +27,12 @@ I18N = {
         "save_config": "保存配置",
         "drop_here": "请将 .zip, .7z, 或 .rar 文件拖到这里",
         "drop_release": "可以松开鼠标了！",
+        "header_title": "Mod 安装包翻译工具",
+        "header_subtitle": "填写 API 配置后，将压缩包拖入下方区域开始处理。",
+        "api_section_title": "API 配置",
+        "lang_section_title": "语言设置",
+        "log_section_title": "处理日志",
+        "drop_hint": "支持 .zip、.7z、.rar",
         "processing_error_busy": "错误：正在处理一个文件，请稍后再试。",
         "start_processing_file": "▶️ 开始处理文件: {filename}",
         "warn_invalid_concurrency": "⚠️ 警告: 并发线程数设置无效，已重置为默认值 10。",
@@ -79,6 +85,12 @@ I18N = {
         "save_config": "Save",
         "drop_here": "Drop .zip, .7z, or .rar files here",
         "drop_release": "Release to drop!",
+        "header_title": "Mod Installer Pack Translator",
+        "header_subtitle": "Configure the API settings, then drop an archive into the area below.",
+        "api_section_title": "API Settings",
+        "lang_section_title": "Language Settings",
+        "log_section_title": "Processing Log",
+        "drop_hint": "Supports .zip, .7z, and .rar",
         "processing_error_busy": "Error: A file is being processed. Please try again later.",
         "start_processing_file": "▶️ Processing file: {filename}",
         "warn_invalid_concurrency": "⚠️ Warning: Invalid concurrency value; reset to default 10.",
@@ -217,6 +229,11 @@ class App(CTkinterDnD):
 
     def refresh_ui_texts(self):
         self.title(self.t("app_title"))
+        self.header_title_label.configure(text=self.t("header_title"))
+        self.header_subtitle_label.configure(text=self.t("header_subtitle"))
+        self.api_section_title_label.configure(text=self.t("api_section_title"))
+        self.lang_section_title_label.configure(text=self.t("lang_section_title"))
+        self.log_section_title_label.configure(text=self.t("log_section_title"))
         self.api_key_label.configure(text=self.t("openai_api_key"))
         self.base_url_label.configure(text=self.t("base_url"))
         self.model_name_label.configure(text=self.t("model_name"))
@@ -225,6 +242,7 @@ class App(CTkinterDnD):
         self.target_language_label.configure(text=self.t("target_language"))
         self.save_btn.configure(text=self.t("save_config"))
         self.drop_target_label.configure(text=self.t("drop_here"))
+        self.drop_hint_label.configure(text=self.t("drop_hint"))
         # 更新placeholder文本
         ui_lang = self.config.get("ui_language", "zh-CN")
         if ui_lang == "zh-CN":
@@ -246,112 +264,179 @@ class App(CTkinterDnD):
     def setup_ui(self):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
-        
-        # 主容器，包含配置和按钮
-        main_settings_frame = ctk.CTkFrame(self, fg_color="transparent")
-        main_settings_frame.grid(row=0, column=0, padx=15, pady=15, sticky="ew")
-        main_settings_frame.grid_columnconfigure(0, weight=1)
 
-        # --- API 配置分组 ---
-        api_frame = ctk.CTkFrame(main_settings_frame)
-        api_frame.grid(row=0, column=0, padx=0, pady=(0, 10), sticky="ew")
+        self.configure(fg_color=("#f4f6f8", "#1a1d21"))
+
+        top_frame = ctk.CTkFrame(self, corner_radius=14, fg_color=("#ffffff", "#23272f"))
+        top_frame.grid(row=0, column=0, padx=18, pady=(18, 12), sticky="ew")
+        top_frame.grid_columnconfigure(0, weight=1)
+
+        self.header_title_label = ctk.CTkLabel(
+            top_frame,
+            text=self.t("header_title"),
+            font=("Microsoft YaHei UI", 22, "bold"),
+            anchor="w"
+        )
+        self.header_title_label.grid(row=0, column=0, padx=20, pady=(18, 4), sticky="w")
+
+        self.header_subtitle_label = ctk.CTkLabel(
+            top_frame,
+            text=self.t("header_subtitle"),
+            font=("Microsoft YaHei UI", 12),
+            text_color=("#5f6b7a", "#b4bdc8"),
+            anchor="w"
+        )
+        self.header_subtitle_label.grid(row=1, column=0, padx=20, pady=(0, 16), sticky="w")
+
+        content_frame = ctk.CTkFrame(self, fg_color="transparent")
+        content_frame.grid(row=1, column=0, padx=18, pady=(0, 18), sticky="nsew")
+        content_frame.grid_columnconfigure(0, weight=1)
+        content_frame.grid_rowconfigure(1, weight=1)
+
+        settings_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        settings_frame.grid(row=0, column=0, sticky="ew")
+        settings_frame.grid_columnconfigure(0, weight=3)
+        settings_frame.grid_columnconfigure(1, weight=2)
+
+        api_frame = ctk.CTkFrame(settings_frame, corner_radius=14, fg_color=("#ffffff", "#23272f"))
+        api_frame.grid(row=0, column=0, padx=(0, 10), pady=(0, 12), sticky="nsew")
+        api_frame.grid_columnconfigure(0, minsize=125)
         api_frame.grid_columnconfigure(1, weight=1)
-        
-        # API配置标题
-        api_title = ctk.CTkLabel(api_frame, text="🔑 API Configuration", font=("Arial", 13, "bold"), anchor="w")
-        api_title.grid(row=0, column=0, columnspan=2, padx=15, pady=(12, 8), sticky="ew")
 
-        self.api_key_label = ctk.CTkLabel(api_frame, text=self.t("openai_api_key"), width=120, anchor="w")
-        self.api_key_label.grid(row=1, column=0, padx=(15, 10), pady=8, sticky="w")
-        self.api_key_entry = ctk.CTkEntry(api_frame, show="*", height=32)
-        self.api_key_entry.grid(row=1, column=1, padx=(0, 15), pady=8, sticky="ew")
+        self.api_section_title_label = ctk.CTkLabel(
+            api_frame,
+            text=self.t("api_section_title"),
+            font=("Microsoft YaHei UI", 15, "bold"),
+            anchor="w"
+        )
+        self.api_section_title_label.grid(row=0, column=0, columnspan=2, padx=18, pady=(16, 12), sticky="ew")
+
+        self.api_key_label = ctk.CTkLabel(api_frame, text=self.t("openai_api_key"), anchor="w", font=("Microsoft YaHei UI", 12))
+        self.api_key_label.grid(row=1, column=0, padx=(18, 12), pady=7, sticky="w")
+        self.api_key_entry = ctk.CTkEntry(api_frame, show="*", height=34, corner_radius=8, border_width=1)
+        self.api_key_entry.grid(row=1, column=1, padx=(0, 18), pady=7, sticky="ew")
         self.api_key_entry.insert(0, self.config["api_key"])
 
-        self.base_url_label = ctk.CTkLabel(api_frame, text=self.t("base_url"), width=120, anchor="w")
-        self.base_url_label.grid(row=2, column=0, padx=(15, 10), pady=8, sticky="w")
-        self.base_url_entry = ctk.CTkEntry(api_frame, placeholder_text="https://api.openai.com/v1", height=32)
-        self.base_url_entry.grid(row=2, column=1, padx=(0, 15), pady=8, sticky="ew")
+        self.base_url_label = ctk.CTkLabel(api_frame, text=self.t("base_url"), anchor="w", font=("Microsoft YaHei UI", 12))
+        self.base_url_label.grid(row=2, column=0, padx=(18, 12), pady=7, sticky="w")
+        self.base_url_entry = ctk.CTkEntry(api_frame, placeholder_text="https://api.openai.com/v1", height=34, corner_radius=8, border_width=1)
+        self.base_url_entry.grid(row=2, column=1, padx=(0, 18), pady=7, sticky="ew")
         self.base_url_entry.insert(0, self.config["base_url"])
 
-        self.model_name_label = ctk.CTkLabel(api_frame, text=self.t("model_name"), width=120, anchor="w")
-        self.model_name_label.grid(row=3, column=0, padx=(15, 10), pady=8, sticky="w")
-        self.model_name_entry = ctk.CTkEntry(api_frame, placeholder_text="gpt-4-turbo", height=32)
-        self.model_name_entry.grid(row=3, column=1, padx=(0, 15), pady=8, sticky="ew")
+        self.model_name_label = ctk.CTkLabel(api_frame, text=self.t("model_name"), anchor="w", font=("Microsoft YaHei UI", 12))
+        self.model_name_label.grid(row=3, column=0, padx=(18, 12), pady=7, sticky="w")
+        self.model_name_entry = ctk.CTkEntry(api_frame, placeholder_text="gpt-4-turbo", height=34, corner_radius=8, border_width=1)
+        self.model_name_entry.grid(row=3, column=1, padx=(0, 18), pady=7, sticky="ew")
         self.model_name_entry.insert(0, self.config["model_name"])
 
-        self.concurrency_label = ctk.CTkLabel(api_frame, text=self.t("concurrency"), width=120, anchor="w")
-        self.concurrency_label.grid(row=4, column=0, padx=(15, 10), pady=(8, 12), sticky="w")
-        self.concurrency_entry = ctk.CTkEntry(api_frame, width=100, height=32)
-        self.concurrency_entry.grid(row=4, column=1, padx=(0, 15), pady=(8, 12), sticky="w")
+        self.concurrency_label = ctk.CTkLabel(api_frame, text=self.t("concurrency"), anchor="w", font=("Microsoft YaHei UI", 12))
+        self.concurrency_label.grid(row=4, column=0, padx=(18, 12), pady=(7, 16), sticky="w")
+        self.concurrency_entry = ctk.CTkEntry(api_frame, width=120, height=34, corner_radius=8, border_width=1)
+        self.concurrency_entry.grid(row=4, column=1, padx=(0, 18), pady=(7, 16), sticky="w")
         self.concurrency_entry.insert(0, self.config["concurrency"])
 
-        # --- 语言配置分组 ---
-        lang_frame = ctk.CTkFrame(main_settings_frame)
-        lang_frame.grid(row=1, column=0, padx=0, pady=(0, 10), sticky="ew")
-        lang_frame.grid_columnconfigure(1, weight=1)
-        lang_frame.grid_columnconfigure(3, weight=1)
-        
-        # 语言配置标题
-        lang_title = ctk.CTkLabel(lang_frame, text="🌍 Language Settings", font=("Arial", 13, "bold"), anchor="w")
-        lang_title.grid(row=0, column=0, columnspan=4, padx=15, pady=(12, 8), sticky="ew")
+        side_frame = ctk.CTkFrame(settings_frame, fg_color="transparent")
+        side_frame.grid(row=0, column=1, padx=(10, 0), pady=(0, 12), sticky="nsew")
+        side_frame.grid_columnconfigure(0, weight=1)
 
-        self.ui_language_label = ctk.CTkLabel(lang_frame, text=self.t("ui_language"), width=120, anchor="w")
-        self.ui_language_label.grid(row=1, column=0, padx=(15, 10), pady=(8, 12), sticky="w")
+        lang_frame = ctk.CTkFrame(side_frame, corner_radius=14, fg_color=("#ffffff", "#23272f"))
+        lang_frame.grid(row=0, column=0, sticky="ew")
+        lang_frame.grid_columnconfigure(0, weight=1)
+
+        self.lang_section_title_label = ctk.CTkLabel(
+            lang_frame,
+            text=self.t("lang_section_title"),
+            font=("Microsoft YaHei UI", 15, "bold"),
+            anchor="w"
+        )
+        self.lang_section_title_label.grid(row=0, column=0, padx=18, pady=(16, 12), sticky="ew")
+
+        self.ui_language_label = ctk.CTkLabel(lang_frame, text=self.t("ui_language"), anchor="w", font=("Microsoft YaHei UI", 12))
+        self.ui_language_label.grid(row=1, column=0, padx=18, pady=(0, 6), sticky="w")
         self.ui_language_var = ctk.StringVar(value=self.get_language_option_label(self.config.get("ui_language", "zh-CN")))
         self.ui_language_menu = ctk.CTkOptionMenu(
             lang_frame,
             values=[self.get_language_option_label(code) for code in SUPPORTED_UI_LANGUAGES],
             variable=self.ui_language_var,
             command=self.on_ui_language_change,
-            height=32,
-            width=200
+            height=34,
+            corner_radius=8,
+            anchor="w"
         )
-        self.ui_language_menu.grid(row=1, column=1, padx=(0, 20), pady=(8, 12), sticky="w")
+        self.ui_language_menu.grid(row=2, column=0, padx=18, pady=(0, 12), sticky="ew")
 
-        self.target_language_label = ctk.CTkLabel(lang_frame, text=self.t("target_language"), width=120, anchor="w")
-        self.target_language_label.grid(row=1, column=2, padx=(15, 10), pady=(8, 12), sticky="w")
+        self.target_language_label = ctk.CTkLabel(lang_frame, text=self.t("target_language"), anchor="w", font=("Microsoft YaHei UI", 12))
+        self.target_language_label.grid(row=3, column=0, padx=18, pady=(0, 6), sticky="w")
         self.target_language_var = ctk.StringVar(value=self.get_language_option_label(self.config.get("target_language", "zh-CN")))
         self.target_language_menu = ctk.CTkOptionMenu(
             lang_frame,
             values=[self.get_language_option_label(code) for code in SUPPORTED_TARGET_LANGUAGES],
             variable=self.target_language_var,
             command=self.on_target_language_change,
-            height=32,
-            width=200
+            height=34,
+            corner_radius=8,
+            anchor="w"
         )
-        self.target_language_menu.grid(row=1, column=3, padx=(0, 15), pady=(8, 12), sticky="w")
+        self.target_language_menu.grid(row=4, column=0, padx=18, pady=(0, 16), sticky="ew")
 
-        # --- 操作按钮区域 ---
-        button_frame = ctk.CTkFrame(main_settings_frame, fg_color="transparent")
-        button_frame.grid(row=2, column=0, padx=0, pady=0, sticky="ew")
-        
+        action_frame = ctk.CTkFrame(side_frame, corner_radius=14, fg_color=("#ffffff", "#23272f"))
+        action_frame.grid(row=1, column=0, pady=(12, 0), sticky="ew")
+        action_frame.grid_columnconfigure(0, weight=1)
+
         self.save_btn = ctk.CTkButton(
-            button_frame, 
-            text=self.t("save_config"), 
-            command=self.save_current_config, 
-            width=120,
-            height=36,
-            font=("Arial", 13, "bold")
+            action_frame,
+            text=self.t("save_config"),
+            command=self.save_current_config,
+            height=38,
+            corner_radius=10,
+            font=("Microsoft YaHei UI", 13, "bold")
         )
-        self.save_btn.pack(side="right", padx=0, pady=0)
+        self.save_btn.grid(row=0, column=0, padx=18, pady=18, sticky="ew")
 
-        # --- Log and Drop Frame ---
-        log_frame = ctk.CTkFrame(self)
-        log_frame.grid(row=1, column=0, padx=15, pady=(0, 15), sticky="nsew")
-        log_frame.grid_rowconfigure(0, weight=1)
+        log_frame = ctk.CTkFrame(content_frame, corner_radius=14, fg_color=("#ffffff", "#23272f"))
+        log_frame.grid(row=1, column=0, sticky="nsew")
+        log_frame.grid_rowconfigure(1, weight=1)
         log_frame.grid_columnconfigure(0, weight=1)
 
-        self.log_textbox = ctk.CTkTextbox(log_frame, state="disabled", corner_radius=8, font=("Consolas", 10))
-        self.log_textbox.grid(row=0, column=0, padx=2, pady=2, sticky="nsew")
+        log_header = ctk.CTkFrame(log_frame, fg_color="transparent")
+        log_header.grid(row=0, column=0, padx=18, pady=(16, 10), sticky="ew")
+        log_header.grid_columnconfigure(0, weight=1)
+
+        self.log_section_title_label = ctk.CTkLabel(
+            log_header,
+            text=self.t("log_section_title"),
+            font=("Microsoft YaHei UI", 15, "bold"),
+            anchor="w"
+        )
+        self.log_section_title_label.grid(row=0, column=0, sticky="w")
+
+        self.drop_hint_label = ctk.CTkLabel(
+            log_header,
+            text=self.t("drop_hint"),
+            font=("Microsoft YaHei UI", 11),
+            text_color=("#5f6b7a", "#b4bdc8"),
+            anchor="e"
+        )
+        self.drop_hint_label.grid(row=0, column=1, sticky="e")
+
+        self.log_textbox = ctk.CTkTextbox(
+            log_frame,
+            state="disabled",
+            corner_radius=10,
+            border_width=1,
+            font=("Consolas", 10),
+            wrap="word"
+        )
+        self.log_textbox.grid(row=1, column=0, padx=18, pady=(0, 18), sticky="nsew")
 
         self.drop_target_label = ctk.CTkLabel(
-            self.log_textbox, 
-            text=self.t("drop_here"), 
-            font=("Arial", 16),
-            text_color=("#808080", "#A0A0A0")
+            self.log_textbox,
+            text=self.t("drop_here"),
+            font=("Microsoft YaHei UI", 18, "bold"),
+            text_color=("#6e7a89", "#a8b0bb")
         )
-        self.drop_target_label.place(relx=0.5, rely=0.5, anchor="center")
-
+        self.drop_target_label.place(relx=0.5, rely=0.46, anchor="center")
+        
         self.refresh_ui_texts()
         
     def setup_dnd(self):
